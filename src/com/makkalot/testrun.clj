@@ -76,9 +76,7 @@
     modified))
 
 
-(defn react-on-change! [tracker modified]
-  ;you should do your reload magic here !
-  (println "Modified files ..." modified))
+(defn react-on-change! [tracker modified])
 
 
 (defn scan-and-react! [tracker options scanner & {:keys [react-fn] :or {react-fn react-on-change!}}]
@@ -103,7 +101,7 @@
   (println "MODIFIED " modified))
 
 (defn autotest
-  "autest method"
+  "autotest method"
   [test-mode options interval]
   (println "AUTOTEST " test-mode options interval)
   (let [track-files (get-file-list options)]
