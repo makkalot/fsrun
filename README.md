@@ -1,22 +1,26 @@
-# testrun
+# fsrun
 
-A Leiningen plugin to do many wonderful things.
+fsrun is a simple high order lein task that run some other tasks when a file modification occurs. There is no need to write your own file notifier plugin anymore :) 
 
 ## Usage
 
-FIXME: Use this for user-level plugins:
+Use this for user-level plugins:
 
-Put `[testrun "0.1.0-SNAPSHOT"]` into the `:plugins` vector of your
+Put `[fsrun "0.1.0"]` into the `:plugins` vector of your
 `:user` profile, or if you are on Leiningen 1.x do `lein plugin install
-testrun 0.1.0-SNAPSHOT`.
+testrun 0.1.0`.
 
-FIXME: Use this for project-level plugins:
+Use this for project-level plugins:
 
-Put `[testrun "0.1.0-SNAPSHOT"]` into the `:plugins` vector of your project.clj.
+Put `[fsrun "0.1.0"]` into the `:plugins` vector of your project.clj.
 
-FIXME: and add an example usage that actually makes sense:
+Originally i've created it to be able to run my clojurescript tests automatically on file change:
 
-    $ lein testrun
+    $ lein fschange /compiled/js/file.js cljsbuild test
+
+fsrun accepts also globbing path so you can 
+
+    $ lein fschange /compiled/js/*.js cljsbuild test
 
 ## License
 
