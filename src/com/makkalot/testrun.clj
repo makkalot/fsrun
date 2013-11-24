@@ -1,6 +1,7 @@
 (ns com.makkalot.testrun
   (:require [clojure.java.io :as io]
-            [clojure.java.shell  :refer [sh]])
+            [clojure.java.shell  :refer [sh]]
+            [me.raynes.fs :as fs])
   (:use [leiningen.core.eval :only [eval-in-project]])
   (:import [java.util.concurrent ScheduledThreadPoolExecutor TimeUnit]
            [java.io File]))
@@ -31,26 +32,14 @@
 (def current-tracker (atom (create-tracker)))
 
 
-(defn find-files [dirs file-filter-fn]
-  (->> dirs
-       (map io/file)
-       (filter #(.exists ^File %))
-       (mapcat file-seq)
-       (filter file-filter-fn)
-       (map #(.getCanonicalFile ^File %))))
-
-(defn js-file?
-  "Returns true if the java.io.File represents a normal javascript
-  file."
-  [^java.io.File file]
-  (and (.isFile file)
-       (.endsWith (.getName file) ".js")))
-
-
-(defn find-js-files
-  "What it gets is absolute paths of files not directories"
-  [dirs]
-  (find-files dirs js-file?))
+(defn find-files
+  ([dirs & {:keys [file-filter-fn] :or {file-filter-fn #(identity %1)}}]
+     (->> dirs
+           (map io/file)
+           (filter #(.exists ^File %))
+           (mapcat file-seq)
+           (filter file-filter-fn)
+           (map #(.getCanonicalFile ^File %)))))
 
 
 (defn modified-files [tracker files]
@@ -71,9 +60,8 @@
 
 (defn scan [tracker dirs]
    (let [ds (seq dirs)
-        files (find-js-files ds)
-        modified (seq (modified-files tracker files))]
-    modified))
+         files (find-files ds)]
+     (seq (modified-files tracker files))))
 
 
 (defn react-on-change! [tracker modified])
@@ -89,8 +77,17 @@
            %))))
 
 
-(defn get-file-list [test-options]
-  (filter #(.endsWith % ".js") test-options))
+(defn get-file-list
+  "That is the place to handle globbing and normal other stuff"
+  [test-options]
+  (reduce (fn [files cur-entry]
+            (let [cur-file (io/file cur-entry)]
+              (if (.exists ^File cur-file)
+                (cons cur-entry files)
+                (concat files (fs/glob cur-entry)))))
+          [] test-options))
+
+
 
 (defn react-fn-runner
   "Runs the commands for the modified test suite"

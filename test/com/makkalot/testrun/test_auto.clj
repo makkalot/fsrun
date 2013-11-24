@@ -2,9 +2,9 @@
   (:require [me.raynes.fs :as fs]
             [clojure.string :refer [join]]
             [com.makkalot.testrun :refer
-             [find-js-files create-tracker modified-files
+             [create-tracker modified-files
               update-files get-tracker-time get-tracker-files
-              scan scan-and-react! create-tracker-atom]])
+              scan scan-and-react! create-tracker-atom find-files]])
   
   (:use clojure.test)
                      
@@ -56,6 +56,20 @@
                #(join-path dir %1)
                (fs/list-dir dir))]
         files))
+
+(defn js-file?
+  "Returns true if the java.io.File represents a normal javascript
+  file."
+  [^java.io.File file]
+  (and (.isFile file)
+       (.endsWith (.getName file) ".js")))
+
+
+(defn find-js-files
+  "What it gets is absolute paths of files not directories"
+  [dirs]
+  (find-files dirs :file-filter-fn js-file?))
+
 
 ;created during fixtures
 (declare ^:dynamic cur-files)
