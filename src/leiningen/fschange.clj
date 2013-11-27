@@ -77,8 +77,6 @@ USAGE: lein do test, compile :all, deploy private-repo"
         :react-fn react-fn)
      1000)
     (while true
-      (Thread/sleep 10000)
-      (println "Checking ...")
-      (println (.get (:autotest @scheduled-futures)))
-      )))
+      (Thread/sleep 10000))))
+
 
