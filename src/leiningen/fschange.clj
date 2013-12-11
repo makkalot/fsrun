@@ -61,7 +61,7 @@
 
 Each comma-separated group should be a task name followed by optional arguments.
 
-USAGE: lein do test, compile :all, deploy private-repo"
+USAGE: lein fschange path, compile :all, deploy private-repo"
   [project & args]
   (let [react-fns (prepare-react-fns project (rest args))
         react-fn (partial call-react-fns react-fns)

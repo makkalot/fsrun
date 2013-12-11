@@ -4,7 +4,7 @@
             [com.makkalot.testrun :refer
              [create-tracker modified-files
               update-files get-tracker-time get-tracker-files
-              scan scan-and-react! create-tracker-atom find-files]])
+              scan scan-and-react! create-tracker-atom get-file-list]])
   
   (:use clojure.test)
                      
@@ -48,27 +48,10 @@
     files))
 
 
-(defn get-file-list
-  "Gets all of the files of the directory"
+(defn get-dir-file-list
+  "Gets all of the files of the directory We get a dir and return java File list"
   [dir]
-  ;(println "Brinign what ! " dir)
-  (let [files (map
-               #(join-path dir %1)
-               (fs/list-dir dir))]
-        files))
-
-(defn js-file?
-  "Returns true if the java.io.File represents a normal javascript
-  file."
-  [^java.io.File file]
-  (and (.isFile file)
-       (.endsWith (.getName file) ".js")))
-
-
-(defn find-js-files
-  "What it gets is absolute paths of files not directories"
-  [dirs]
-  (find-files dirs :file-filter-fn js-file?))
+  (get-file-list [(str dir "/*")]))
 
 
 ;created during fixtures
@@ -89,7 +72,7 @@
 
 
 (deftest test-find-files
-  (let [found-files (find-js-files (get-file-list cur-dir))]
+  (let [found-files (get-dir-file-list cur-dir)]
                                         ;check the number of files
     (is (== (count cur-files)
             (count found-files)))
@@ -100,11 +83,9 @@
             (map #(.getAbsolutePath %) found-files))))))
 
 
-
-
 (deftest test-modify
   (let [tracker (create-tracker)
-        found-files (find-js-files (get-file-list cur-dir))]
+        found-files (get-dir-file-list cur-dir)]
     (is (== (count found-files)
             (count
              (modified-files tracker found-files))))))
@@ -112,7 +93,7 @@
 
 (deftest test-modify-update
   (let [tracker (create-tracker)
-        found-files (find-js-files (get-file-list cur-dir))
+        found-files (get-dir-file-list cur-dir)
         updated-tracker (update-files tracker found-files)
         to-modify (first found-files)]
     (is (not
@@ -125,10 +106,7 @@
     (fs/touch (.getAbsolutePath to-modify)
               (+ 1000 (System/currentTimeMillis)))
    
-    (let [re-file (first
-                   (find-js-files
-                    [(.getAbsolutePath to-modify)]))
-          modified-fs (modified-files updated-tracker found-files)]
+    (let [modified-fs (modified-files updated-tracker found-files)]
 
       (is (== 1 (count modified-fs)))
       (is (= (.getAbsolutePath
@@ -141,7 +119,7 @@
 (deftest test-scan
   (let
       [tracker (create-tracker-atom)
-       file-list (get-file-list cur-dir)
+       file-list (get-dir-file-list cur-dir)
        to-modify (first file-list)
        react-atom (atom {})]
     
@@ -161,9 +139,8 @@
      :react-fn (partial react-fn-test react-atom))
     
                                         ;now check if the file is same
-    (is (= to-modify
+    (is (= (.getAbsolutePath ^File to-modify)
            (.getAbsolutePath (first (@react-atom :files)))))))
-
 
 
 (use-fixtures :each tmp-file-fixture)

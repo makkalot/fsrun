@@ -32,14 +32,16 @@
 (def current-tracker (atom (create-tracker)))
 
 
-(defn find-files
-  ([dirs & {:keys [file-filter-fn] :or {file-filter-fn #(identity %1)}}]
-     (->> dirs
-           (map io/file)
-           (filter #(.exists ^File %))
-           (mapcat file-seq)
-           (filter file-filter-fn)
-           (map #(.getCanonicalFile ^File %)))))
+(defn get-file-list
+  "That is the place to handle globbing and normal other stuff"
+  [file-options]
+  (map #(.getCanonicalFile ^File %)
+       (reduce (fn [files cur-entry]
+                 (let [cur-file (io/file cur-entry)]
+                   (if (.exists ^File cur-file)
+                     (cons cur-file files)
+                     (concat files (fs/glob cur-entry)))))
+               [] file-options)))
 
 
 (defn modified-files [tracker files]
@@ -60,7 +62,7 @@
 
 (defn scan [tracker dirs]
    (let [ds (seq dirs)
-         files (find-files ds)]
+         files (get-file-list ds)]
      (seq (modified-files tracker files))))
 
 
@@ -75,17 +77,5 @@
              (react-fn % modified)
              (update-files % modified))
            %))))
-
-
-(defn get-file-list
-  "That is the place to handle globbing and normal other stuff"
-  [test-options]
-  (reduce (fn [files cur-entry]
-            (let [cur-file (io/file cur-entry)]
-              (if (.exists ^File cur-file)
-                (cons cur-entry files)
-                (concat files (fs/glob cur-entry)))))
-          [] test-options))
-
 
 
