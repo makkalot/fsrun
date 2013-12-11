@@ -1,4 +1,4 @@
-(defproject fsrun "0.1.1"
+(defproject fsrun "0.1.2"
   :description "High Order Plugin to run some tasks on fs change"
   :url "https://github.com/makkalot/fsrun"
   :license {:name "Eclipse Public License"
