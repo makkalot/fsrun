@@ -23,17 +23,24 @@
     (swap! scheduled-futures assoc service-tag future)))
 
 ;file operations here
-(defn create-tracker []
+(defn create-tracker
+  "We keep here the files we track"
+  []
   {})
 
-(defn create-tracker-atom []
+(defn create-tracker-atom
+  "Atom based tracker"
+  []
   (atom (create-tracker)))
 
 (def current-tracker (atom (create-tracker)))
 
 
 (defn get-file-list
-  "That is the place to handle globbing and normal other stuff"
+  "Fn takes a list of files/globbing paths and
+   Returns back a sequence of ^File objects
+   Usage : (get-file-list [\"/file/path\" \"/path/*.js\"])
+   "
   [file-options]
   (map #(.getCanonicalFile ^File %)
        (reduce (fn [files cur-entry]
@@ -44,10 +51,18 @@
                [] file-options)))
 
 
-(defn modified-files [tracker files]
+(defn modified-files
+  "Fn checks the tracker dict against supplied
+   file list and returns back only modified ones
+   @param tracker : tracker dict
+   @param files : A list of ^File objects
+   @returns : Only modified list of ^File"
+  [tracker files]
   (filter #(< (::time tracker 0) (.lastModified ^File %)) files))
 
-(defn update-files [tracker modified]
+(defn update-files
+  "Fn updates tracker map with the modified list of Files"
+  [tracker modified]
   (let [now (System/currentTimeMillis)]
     (-> tracker
         (update-in [::files] (fnil into #{}) modified)
@@ -60,16 +75,32 @@
 (defn get-tracker-files [tracker]
   (::files tracker))
 
-(defn scan [tracker dirs]
-   (let [ds (seq dirs)
-         files (get-file-list ds)]
-     (seq (modified-files tracker files))))
+(defn scan
+  "Fn scans the supplied paths they can be
+   real paths or globbing paths and checks those
+   paths against given tracker and returns back only
+   modified ones back as a sequence"
+  [tracker dirs]
+  (let [ds (seq dirs)
+        files (get-file-list ds)]
+    (seq (modified-files tracker files))))
 
 
-(defn react-on-change! [tracker modified])
+(defn react-on-change!
+  "A default implementatiton of callback
+   that will be called on file change. You should
+   supply your own it is a default one and empty for now
+   Accepts tracker which is Map like object and a list of
+   modified files to act on."
+  [tracker modified])
 
 
-(defn scan-and-react! [tracker options scanner & {:keys [react-fn] :or {react-fn react-on-change!}}]
+(defn scan-and-react!
+  "Main function that checks :files field of supplied
+  options and calls the react-fn on file change and updates
+  the current tracker file map with new modified files
+  Should be called in some loop!"
+  [tracker options scanner & {:keys [react-fn] :or {react-fn react-on-change!}}]
   (swap! tracker
        #(let [modified (scanner % (:files options))]
          (if modified
@@ -77,5 +108,3 @@
              (react-fn % modified)
              (update-files % modified))
            %))))
-
-
